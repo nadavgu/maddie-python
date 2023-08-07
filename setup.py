@@ -5,4 +5,7 @@ setup(name='maddie',
       author='Nadav Gur',
       author_email='nadavgu@gmail.com',
       packages=find_packages(include='maddie*'),
+      tests_require=[
+            'pytest~=7.4'
+      ]
       )
