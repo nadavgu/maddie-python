@@ -1,8 +1,6 @@
 from typing import Any, Dict, TypeVar, Type
 
-from maddie.dependency import Dependency
-
-T = TypeVar('T', bound=Dependency)
+T = TypeVar('T')
 
 
 class DependencyContainer:
@@ -17,5 +15,5 @@ class DependencyContainer:
 
     def get(self, dependency_type: Type[T]) -> T:
         if dependency_type not in self.__dependencies:
-            self.add(dependency_type, dependency_type.create())
+            self.add(dependency_type, dependency_type.create(self))
         return self.__dependencies[dependency_type]
