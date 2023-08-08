@@ -7,6 +7,7 @@ from maddie.dependency_container import DependencyContainer
 
 CREATE_VALUE = 1000
 ADD_VALUE = 2000
+PROVIDE_VALUE = 3000
 
 
 @dataclass
@@ -19,6 +20,11 @@ class SimpleDependency(Dependency):
     def create(dependency_container: DependencyContainer) -> 'SimpleDependency':
         SimpleDependency.amount_created += 1
         return SimpleDependency(value=CREATE_VALUE)
+
+    @staticmethod
+    def provide(_: DependencyContainer) -> 'SimpleDependency':
+        SimpleDependency.amount_created += 1
+        return SimpleDependency(value=PROVIDE_VALUE)
 
 
 @dataclass
@@ -62,3 +68,18 @@ class TestDependencyContainer:
         dependency_container.get(SimpleDependency)
         assert SimpleDependency.amount_created == 1
 
+    def test_provided_dependency(self, dependency_container):
+        dependency_container.add_provider(SimpleDependency, SimpleDependency.provide)
+        assert dependency_container.get(SimpleDependency).value == PROVIDE_VALUE
+        assert SimpleDependency.amount_created == 1
+
+    def test_provided_dependency_only_created_once(self, dependency_container):
+        dependency_container.add_provider(SimpleDependency, SimpleDependency.provide)
+        dependency_container.get(SimpleDependency)
+        dependency_container.get(SimpleDependency)
+        assert SimpleDependency.amount_created == 1
+
+    def test_dependency_only_created_twice_when_creating_explicitly(self, dependency_container):
+        dependency_container.create(SimpleDependency)
+        dependency_container.create(SimpleDependency)
+        assert SimpleDependency.amount_created == 2
