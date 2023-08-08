@@ -96,3 +96,15 @@ class TestDependencyContainer:
         dependency_container.bind(SimpleDependency, BoundDependency)
         assert dependency_container.get(SimpleDependency).value == BOUND_VALUE
         assert SimpleDependency.amount_created == 1
+
+    def test_dependency_tags(self, dependency_container):
+        dependency_container.add_dependency(SimpleDependency(ADD_VALUE), tag='added')
+        dependency_container.add_provider(SimpleDependency, SimpleDependency.provide, tag='provided')
+        dependency_container.bind(SimpleDependency, BoundDependency, tag='bound')
+
+        assert dependency_container.get(SimpleDependency).value == CREATE_VALUE
+        assert dependency_container.get(SimpleDependency, tag='added').value == ADD_VALUE
+        assert dependency_container.get(SimpleDependency, tag='provided').value == PROVIDE_VALUE
+        assert dependency_container.get(SimpleDependency, tag='bound').value == BOUND_VALUE
+
+        assert SimpleDependency.amount_created == 3

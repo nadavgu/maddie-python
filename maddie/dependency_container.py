@@ -1,31 +1,35 @@
-from typing import Any, Dict, TypeVar, Type, Callable
+from typing import Any, Dict, TypeVar, Type, Callable, Tuple, Optional
 
 T = TypeVar('T')
 
 
+DependencyID = Tuple[Type, Optional[str]]
+
+
 class DependencyContainer:
     def __init__(self):
-        self.__dependencies: Dict[Type, Any] = {}
-        self.__providers: Dict[Type, Callable[['DependencyContainer'], Any]] = {}
+        self.__dependencies: Dict[DependencyID, Any] = {}
+        self.__providers: Dict[DependencyID, Callable[['DependencyContainer'], Any]] = {}
 
-    def add(self, dependency_type: Type[T], dependency: T):
-        self.__dependencies[dependency_type] = dependency
+    def add(self, dependency_type: Type[T], dependency: T, tag: Optional[str] = None):
+        self.__dependencies[(dependency_type, tag)] = dependency
 
-    def add_dependency(self, dependency: T):
-        self.add(type(dependency), dependency)
+    def add_dependency(self, dependency: T, tag: Optional[str] = None):
+        self.add(type(dependency), dependency, tag)
 
-    def get(self, dependency_type: Type[T]) -> T:
-        if dependency_type not in self.__dependencies:
-            self.add(dependency_type, self.create(dependency_type))
-        return self.__dependencies[dependency_type]
+    def get(self, dependency_type: Type[T], tag: Optional[str] = None) -> T:
+        if (dependency_type, tag) not in self.__dependencies:
+            self.add(dependency_type, self.create(dependency_type, tag), tag)
+        return self.__dependencies[(dependency_type, tag)]
 
-    def create(self, dependency_type: Type[T]) -> T:
-        if dependency_type in self.__providers:
-            return self.__providers[dependency_type](self)
+    def create(self, dependency_type: Type[T],  tag: Optional[str] = None) -> T:
+        if (dependency_type, tag) in self.__providers:
+            return self.__providers[(dependency_type, tag)](self)
         return dependency_type.create(self)
 
-    def add_provider(self, dependency_type: Type[T], provider: Callable[['DependencyContainer'], Any]):
-        self.__providers[dependency_type] = provider
+    def add_provider(self, dependency_type: Type[T], provider: Callable[['DependencyContainer'], Any],
+                     tag: Optional[str] = None):
+        self.__providers[(dependency_type, tag)] = provider
 
-    def bind(self, dependency_type: Type[T], providing_type: Type[T]):
-        self.add_provider(dependency_type, lambda dependency_container: dependency_container.get(providing_type))
+    def bind(self, dependency_type: Type[T], providing_type: Type[T], tag: Optional[str] = None):
+        self.add_provider(dependency_type, lambda dependency_container: dependency_container.get(providing_type), tag)
