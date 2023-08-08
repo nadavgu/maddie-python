@@ -8,6 +8,7 @@ from maddie.dependency_container import DependencyContainer
 CREATE_VALUE = 1000
 ADD_VALUE = 2000
 PROVIDE_VALUE = 3000
+BOUND_VALUE = 4000
 
 
 @dataclass
@@ -34,6 +35,13 @@ class ComplexDependency(Dependency):
     @staticmethod
     def create(dependency_container: DependencyContainer) -> 'ComplexDependency':
         return ComplexDependency(dependency_container.get(SimpleDependency))
+
+
+class BoundDependency(SimpleDependency):
+    @staticmethod
+    def create(dependency_container: DependencyContainer) -> 'SimpleDependency':
+        SimpleDependency.amount_created += 1
+        return BoundDependency(BOUND_VALUE)
 
 
 class TestDependencyContainer:
@@ -83,3 +91,8 @@ class TestDependencyContainer:
         dependency_container.create(SimpleDependency)
         dependency_container.create(SimpleDependency)
         assert SimpleDependency.amount_created == 2
+
+    def test_bound_dependency(self, dependency_container):
+        dependency_container.bind(SimpleDependency, BoundDependency)
+        assert dependency_container.get(SimpleDependency).value == BOUND_VALUE
+        assert SimpleDependency.amount_created == 1
